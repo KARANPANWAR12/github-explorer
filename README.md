@@ -1,60 +1,81 @@
 # GitHub Explorer
 
-A full-stack web application that lets users search any GitHub username and instantly view their public profile and repositories. Built as a take-home assignment for the Studio Graphene Associate Software Engineer role.
+A full-stack web application that allows users to search any GitHub username and instantly explore their public profile, repositories, and language statistics.
 
-The app is a proxy architecture — React never calls GitHub directly. All requests go through the Node.js backend, which caches responses for 60 seconds to avoid hitting GitHub's rate limit and to keep sensitive tokens server-side.
+Built as a take-home assignment for the Studio Graphene Associate Software Engineer role.
 
----
-
-## Live Demo
-
-| Service | URL |
-|---------|-----|
-| Frontend (Vercel) | _Add your Vercel URL here after deployment_ |
-| Backend (Render) | _Add your Render URL here after deployment_ |
+The application follows a proxy architecture where the React frontend never communicates directly with the GitHub API. All requests pass through a Node.js + Express backend that handles caching, rate-limit protection, and API aggregation.
 
 ---
 
-## Tech Stack
+# Live Deployment
 
-| Technology | Role | Why I chose it |
-|------------|------|----------------|
-| **React 18 + Vite** | Frontend framework | Vite's dev server is significantly faster than CRA; React hooks make state management clean |
-| **Node.js + Express** | Backend server | Lightweight and fast; the assignment specified Node.js |
-| **Axios** | HTTP client | Cleaner error handling than native fetch (catches non-2xx as errors automatically) |
-| **Tailwind CSS** | Styling | Utility-first approach means no separate CSS files; responsive by default |
-| **Recharts** | Data visualisation | React-native charting library; easy to integrate without D3 complexity |
-| **In-memory cache** | Caching layer | A plain JS object with timestamps — no Redis needed, keeps setup simple |
-| **dotenv** | Environment variables | Safely loads secrets (GitHub token) from a `.env` file that is never committed to Git |
+| Service           | URL                                              |
+| ----------------- | ------------------------------------------------ |
+| Frontend (Vercel) | https://github-explorer-eta-two.vercel.app       |
+| Backend (Render)  | https://github-explorer-01nb.onrender.com        |
+| GitHub Repository | https://github.com/KARANPANWAR12/github-explorer |
 
 ---
 
-## How to Run Locally
+# Features
 
-> Assumes you have **Node.js 18+** and **npm** installed. Nothing else required.
+* Search any GitHub user
+* View profile information
+* View public repositories
+* Sort repositories
+* Filter repositories by language
+* Language distribution chart
+* Recently searched usernames
+* Server-side caching
+* Responsive UI
+* Loading skeletons
+* Error handling
+* Pagination support
 
-### 1. Clone the repository
+---
+
+# Tech Stack
+
+| Technology        | Purpose                  |
+| ----------------- | ------------------------ |
+| React 18 + Vite   | Frontend                 |
+| Node.js + Express | Backend                  |
+| Axios             | API requests             |
+| Tailwind CSS      | Styling                  |
+| Recharts          | Data visualization       |
+| dotenv            | Environment variables    |
+| In-Memory Cache   | Performance optimization |
+
+---
+
+# Local Setup
+
+## Clone Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/github-explorer.git
+git clone https://github.com/KARANPANWAR12/github-explorer.git
 cd github-explorer
 ```
 
-### 2. Set up the backend
+## Backend Setup
 
 ```bash
 cd server
 npm install
 cp .env.example .env
-# Optional: add your GitHub token to .env to increase rate limit from 60 → 5000 req/hr
 npm run dev
 ```
 
-Server starts at `http://localhost:5000`
+Backend runs on:
 
-Verify it's running: `http://localhost:5000/health`
+```text
+http://localhost:5000
+```
 
-### 3. Set up the frontend (new terminal)
+## Frontend Setup
+
+Open another terminal:
 
 ```bash
 cd client
@@ -62,190 +83,133 @@ npm install
 npm run dev
 ```
 
-Frontend starts at `http://localhost:5173`
+Frontend runs on:
 
-Open `http://localhost:5173` in your browser and search for any GitHub username (e.g. `torvalds`, `gaearon`, `sindresorhus`).
-
-> **Note:** No need to configure the API URL in development — Vite's proxy automatically forwards `/api/*` requests to `localhost:5000`.
+```text
+http://localhost:5173
+```
 
 ---
 
-## API Documentation
+# API Endpoints
 
-Base URL (development): `http://localhost:5000`
+## Get User Profile & Repositories
 
-### `GET /api/user/:username`
+```http
+GET /api/user/:username
+```
 
-Fetches a GitHub user's profile and their public repositories.
+Example:
 
-**URL Parameters:**
+```http
+GET /api/user/torvalds
+```
 
-| Param | Type | Required | Description |
-|-------|------|----------|-------------|
-| `username` | string | Yes | GitHub username to look up |
-
-**Query Parameters:**
-
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| `page` | number | 1 | Page number for repo pagination (30 repos per page) |
-
-**Success Response (200):**
+### Success Response
 
 ```json
 {
-  "user": {
-    "login": "torvalds",
-    "name": "Linus Torvalds",
-    "avatar_url": "https://...",
-    "bio": "...",
-    "followers": 229000,
-    "following": 0,
-    "public_repos": 9,
-    "html_url": "https://github.com/torvalds",
-    "location": "Portland, OR",
-    "created_at": "2011-09-03T..."
-  },
-  "repos": [
-    {
-      "id": 2325298,
-      "name": "linux",
-      "description": "Linux kernel source tree",
-      "html_url": "https://github.com/torvalds/linux",
-      "language": "C",
-      "stargazers_count": 180000,
-      "forks_count": 50000,
-      "open_issues_count": 398,
-      "default_branch": "master",
-      "updated_at": "2024-03-15T...",
-      "topics": ["kernel", "linux"]
-    }
-  ],
-  "totalRepos": 9,
+  "user": {},
+  "repos": [],
+  "totalRepos": 12,
   "currentPage": 1,
   "hasMore": false,
   "fromCache": false
 }
 ```
 
-**Error Responses:**
+### Error Responses
 
-| Status | Condition | Response body |
-|--------|-----------|---------------|
-| 404 | Username not found | `{ "error": "No GitHub user found with username ..." }` |
-| 429 | GitHub rate limit exceeded | `{ "error": "GitHub API rate limit reached. Please wait 60 seconds..." }` |
-| 500 | Network / server error | `{ "error": "Could not reach GitHub. Please check your internet connection..." }` |
-
----
-
-### `GET /health`
-
-Health check endpoint for deployment verification.
-
-**Response (200):**
-```json
-{ "status": "ok", "message": "GitHub Explorer server is running!", "timestamp": "..." }
-```
+| Status | Description           |
+| ------ | --------------------- |
+| 404    | User not found        |
+| 429    | Rate limit exceeded   |
+| 500    | Internal server error |
 
 ---
 
-### `GET /api/cache-stats`
+## Cache Statistics
 
-Development helper — shows what's currently in the in-memory cache.
-
-**Response (200):**
-```json
-{ "keys": 3, "entries": ["torvalds_page1", "gaearon_page1", "sindresorhus_page1"] }
+```http
+GET /api/cache-stats
 ```
+
+Returns current cache entries and statistics.
 
 ---
 
-## Project Structure
+# Project Structure
 
-```
+```text
 github-explorer/
-├── server/                     ← Node.js + Express backend
-│   ├── index.js                  Entry point — sets up Express, middleware, routes
-│   ├── cache.js                  In-memory cache module with 60s TTL
-│   ├── package.json
-│   ├── .env.example              Template for environment variables
-│   └── routes/
-│       └── github.js             GitHub API proxy route — the core of the backend
 │
-├── client/                     ← React frontend
-│   ├── index.html                Root HTML shell
-│   ├── vite.config.js            Vite config with dev proxy to backend
-│   ├── tailwind.config.js
-│   ├── postcss.config.js
+├── client/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── App.jsx
+│   │   ├── main.jsx
+│   │   └── index.css
+│   │
 │   ├── package.json
-│   ├── .env.example
-│   └── src/
-│       ├── main.jsx              React entry point — mounts App into #root
-│       ├── index.css             Global styles + Tailwind + skeleton animation
-│       ├── App.jsx               Root component — all state lives here
-│       └── components/
-│           ├── SearchBar.jsx     Controlled search input
-│           ├── ProfileCard.jsx   User profile display (avatar, bio, stats)
-│           ├── RepoList.jsx      Repo list with sort and language filter
-│           ├── RepoCard.jsx      Individual repo card with expand/collapse
-│           ├── LanguageChart.jsx Recharts donut chart for language breakdown
-│           ├── ErrorMessage.jsx  Error display with retry button
-│           └── LoadingSkeleton.jsx Shimmer loading placeholder
+│   └── vite.config.js
+│
+├── server/
+│   ├── routes/
+│   │   └── github.js
+│   ├── cache.js
+│   ├── index.js
+│   └── package.json
 │
 └── README.md
 ```
 
 ---
 
-## Deployment Guide
+# Deployment
 
-### Backend → Render (free tier)
+## Backend (Render)
 
-1. Push code to a public GitHub repo
-2. Go to [render.com](https://render.com) → New → Web Service
-3. Connect your GitHub repo
-4. Set **Root Directory** to `server`
-5. Set **Start Command** to `node index.js`
-6. Add environment variable: `GITHUB_TOKEN` = your token (optional but recommended)
-7. Deploy and copy the URL (e.g. `https://github-explorer-api.onrender.com`)
+* Root Directory: `server`
+* Build Command: `npm install`
+* Start Command: `node index.js`
 
-### Frontend → Vercel (free tier)
+Live Backend:
 
-1. Go to [vercel.com](https://vercel.com) → Import Git Repository
-2. Set **Root Directory** to `client`
-3. Add environment variable: `VITE_API_URL` = your Render backend URL
-4. Deploy
-5. Test by searching a username from an incognito window
+https://github-explorer-01nb.onrender.com
 
----
+## Frontend (Vercel)
 
-## What Works
+* Root Directory: `client`
+* Framework: Vite
 
-- ✅ All Must Have requirements (search, profile display, repo list, sort, error handling)
-- ✅ Server-side caching with 60s TTL
-- ✅ Loading skeleton (shimmer animation)
-- ✅ Pagination (Load More)
-- ✅ Expand repo card for extra details
-- ✅ Recently searched usernames (localStorage, persists across sessions)
-- ✅ Language distribution chart (Recharts donut)
-- ✅ Language filter dropdown
-- ✅ Mobile responsive
+Environment Variable:
 
-## What I Would Add Next
+```env
+VITE_API_URL=https://github-explorer-01nb.onrender.com
+```
 
-- **Persistent cache with Redis** — the current in-memory cache clears on server restart; Redis would survive restarts
-- **Rate limiting by IP** — protect the `/api/user/:username` endpoint from being abused
-- **GitHub OAuth** — let users log in to view their own private repos and increase their personal rate limit
-- **Debounced search-as-you-type** — search while the user types with a 300ms debounce delay
-- **Unit tests** — test the cache module (get/set/TTL expiry) and the Express route error handling
-- **SQLite persistence** — save search history to a database so it works across devices
+Live Frontend:
+
+https://github-explorer-eta-two.vercel.app
 
 ---
 
-## AI Tool Usage Disclosure
+# Future Improvements
 
-I used Claude as an AI assistant during development — primarily for syntax help when working in JavaScript (my primary language is Python) and for boilerplate like Tailwind class suggestions. Every architectural decision — the proxy pattern, the cache design, the component structure, the error handling strategy — was made by me. I can explain every line of code in this project.
+* Redis-based persistent caching
+* GitHub OAuth authentication
+* Search debouncing
+* Unit testing
+* Database-backed search history
+* Rate limiting by IP
 
 ---
 
-*Built by Karan Panwar · Studio Graphene Take-Home Assignment · June 2026*
+# AI Usage Disclosure
+
+AI tools were used for syntax assistance, documentation refinement, and development productivity. All architectural decisions, implementation logic, application structure, deployment setup, and feature design were completed and understood by the developer.
+
+---
+
+Built by **Karan Panwar**
+Studio Graphene Take-Home Assignment • 2026
