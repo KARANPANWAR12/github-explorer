@@ -17,37 +17,38 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ─── MIDDLEWARE ──────────────────────────────────────────────────────────────
-// Middleware = code that runs on EVERY request before it reaches a route
 
-/**
- * CORS (Cross-Origin Resource Sharing)
- * Without this, browsers BLOCK our React app (localhost:5173) from
- * calling our server (localhost:5000) — they're on different "origins".
- * cors() tells the browser: "Yes, this server allows requests from other origins."
- */
 const corsOptions = {
-  origin: process.env.CLIENT_URL || '*', // In production, restrict to your Vercel URL
-  methods: ['GET'],                       // We only need GET for this app
+  origin: process.env.CLIENT_URL || '*',
+  methods: ['GET'],
 };
 app.use(cors(corsOptions));
-
-/**
- * JSON Body Parser
- * Automatically parses incoming JSON request bodies.
- * So we can do req.body.username instead of manually parsing raw text.
- */
 app.use(express.json());
 
 // ─── ROUTES ──────────────────────────────────────────────────────────────────
 
-// Mount all GitHub-related routes under /api
-// So /api/user/:username, /api/cache-stats, etc.
 app.use('/api', githubRoutes);
+
+/**
+ * Root Route
+ * This is what shows when someone visits the backend URL directly.
+ * Example: https://github-explorer-01nb.onrender.com/
+ */
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: '🚀 GitHub Explorer API is live and running!',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      user: '/api/user/:username'
+    }
+  });
+});
 
 /**
  * Health Check Route
  * Used to verify the server is running — especially useful after deployment.
- * Render.com and Railway also use this to check if the app is alive.
  */
 app.get('/health', (req, res) => {
   res.json({
